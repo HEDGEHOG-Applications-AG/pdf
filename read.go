@@ -4,7 +4,7 @@
 
 // Package pdf implements reading of PDF files.
 //
-// Overview
+// # Overview
 //
 // PDF is Adobe's Portable Document Format, ubiquitous on the internet.
 // A PDF document is a complex data format built on a fairly simple structure.
@@ -43,7 +43,6 @@
 // they are implemented only in terms of the Value API and could be moved outside
 // the package. Equally important, traversal of other PDF data structures can be implemented
 // in other packages as needed.
-//
 package pdf
 
 // BUG(rsc): The package is incomplete, although it has been used successfully on some
@@ -181,7 +180,7 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 	searchSize := int64(200)
 	searchSizeRead := int(0)
 
-	EOFDetect:
+EOFDetect:
 	for {
 		buf = make([]byte, searchSize)
 
@@ -192,14 +191,14 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 		buf = bytes.TrimRight(buf, "\r\n\t ")
 		for {
 			if len(buf) == 5 {
-				break;
+				break
 			}
 
 			if bytes.HasSuffix(buf, []byte("%%EOF")) {
-				break EOFDetect;
+				break EOFDetect
 			}
 
-			buf = buf[0:len(buf)-1]
+			buf = buf[0 : len(buf)-1]
 		}
 
 		searchSize += 200
@@ -213,7 +212,7 @@ func NewReaderEncrypted(f io.ReaderAt, size int64, pw func() string) (*Reader, e
 
 	// Read 200 bytes before the %%EOF.
 	buf = make([]byte, int64(200))
-	f.ReadAt(buf, end - (int64(searchSizeRead) - int64(eofPosition)) - int64(len(buf)))
+	f.ReadAt(buf, end-(int64(searchSizeRead)-int64(eofPosition))-int64(len(buf)))
 
 	i := findLastLine(buf, "startxref")
 	if i < 0 {
@@ -748,7 +747,7 @@ func (v Value) RawString() string {
 	return x
 }
 
-// Text returns v's string value interpreted as a ``text string'' (defined in the PDF spec)
+// Text returns v's string value interpreted as a “text string” (defined in the PDF spec)
 // and converted to UTF-8.
 // If v.Kind() != String, Text returns the empty string.
 func (v Value) Text() string {
@@ -946,7 +945,7 @@ func (e *errorReadCloser) Close() error {
 
 // Reader returns the data contained in the stream v.
 // If v.Kind() != Stream, Reader returns a ReadCloser that
-// responds to all reads with a ``stream not present'' error.
+// responds to all reads with a “stream not present” error.
 func (v Value) Reader() io.ReadCloser {
 	x, ok := v.data.(stream)
 	if !ok {
@@ -1050,7 +1049,7 @@ func (r *Reader) initEncrypt(password string) error {
 		return fmt.Errorf("malformed PDF: %d-bit encryption key", n)
 	}
 	V, _ := encrypt["V"].(int64)
-	if V != 1 && V != 2 && (V != 4 || !okayV4(encrypt)) {
+	if V != 1 && V != 2 && (V != 4 || (r.useAES && !okayV4(encrypt))) {
 		return fmt.Errorf("unsupported PDF: encryption version V=%d; %v", V, objfmt(encrypt))
 	}
 
@@ -1137,7 +1136,7 @@ func (r *Reader) initEncrypt(password string) error {
 	}
 
 	r.key = key
-	r.useAES = V == 4
+	r.useAES = V == 4 && okayV4(encrypt)
 
 	return nil
 }
